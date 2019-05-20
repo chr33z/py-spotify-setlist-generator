@@ -49,7 +49,7 @@ This tool uses a ```config.json``` file to provide the authentification and api 
 ### First time startup and authentification with Spotify
 The tool is started by running ```py_spotify_sg_cli.py```, you may have to install some dependencies [info on that tbc]
 
-Upon the first start of the tool you have to confirm access of this tool to your spotify account. For this a browser windows is opened where you can enter your credentials. **Your will be redirected to page ```http://localhost/?code=...```. Copy the URL and paste it in the tools terminal window.**
+When the tool is started for the first time you have to grant access to your spotify account. To do this, a browser windows is opened where you can enter your credentials. **When the operation was successfull you will be redirected to another page ```http://localhost/?code=...```. Copy the whole URL and paste it in the tools terminal window. See the instructions of the tool for more information.**
 
 ## Further Development
 - [ ] Search for festivals and create playlists based on the bands playing there
