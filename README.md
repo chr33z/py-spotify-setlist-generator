@@ -23,7 +23,7 @@ This project is still under development and will receive some updates that make 
 
 - In Spotify, copy the link of your spotify URI, e.g. ```spotify:user:5585525555```
 - Note the part after ```user:...``` as your ```spotify user id```
-![Spotify User ID](https://github.com/chr33z/py-spotify-setlist-generator/blob/master/img/spotify__user_id.png)
+![Spotify User ID](https://github.com/chr33z/py-spotify-setlist-generator/blob/master/img/spotify_user_id.png)
 
 ### Setlist.fm authentification:
 - Create an setlist.fm API on https://www.setlist.fm/settings/api
