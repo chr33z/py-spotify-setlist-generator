@@ -31,7 +31,7 @@ This tool uses a ```config.json``` file to provide the authentification and api 
 ![Spotify User ID](https://github.com/chr33z/py-spotify-setlist-generator/blob/master/img/spotify_user_id.png)
 
 ### Setlist.fm authentification:
-- Create an setlist.fm API on https://www.setlist.fm/settings/api
+- Create an setlist.fm API key on https://www.setlist.fm/settings/api
 - Note the ```setlist fm api key```
 
 ### Setting up the config:
