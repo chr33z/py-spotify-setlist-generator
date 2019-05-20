@@ -7,11 +7,18 @@ import sys
 import webbrowser
 
 
+setlist_generator = None
+found_setlists = ['setlist 1', 'setlist 2']
 
 def get_setlist_options(answers):
+    global found_setlists
+    
     options = []
 
     for setlist in found_setlists:
+        if len(setlist['sets']['set']) == 0:
+            continue
+
         artist = setlist['artist']['name']
         date = setlist['eventDate']
         tour = setlist['tour']['name']
@@ -32,37 +39,55 @@ setlist_query_question = [
     }
 ]
 
-setlist_result_question = [
-    {
-        'type': 'list',
-        'name': 'setlist_result',
-        'message': 'Select a setlist you want to generate a spotify playlist for - or select \'Search again...\'',
-        'choices': get_setlist_options
-    }
-]
-
-setlist_generator = None
-found_setlists = ['setlist 1', 'setlist 2']
-
 def main():
     global setlist_generator
     
-    print("Main")
+    print("")   
+    print("Py Spotfiy Setlist Generator")
+    print("============================")
+    print("""
+    Spotify Setlist generator is a tool that generates playlists from a concert or tour of an artist. 
+    Just search for an artists name and select the setlist you want to create.
+    """)
+    print("For further information see: https://github.com/chr33z/py-spotify-setlist-generator")
+    print("Published under MIT License - Copyright (c) 2019 Christopher Gebhardt")
+    print("")
     config = find_authentifications()
+
+    if not config:
+        print("""
+    Warning! No config found that contains the spotify authentification and user data.
+    Please refer to print("For further information see: https://github.com/chr33z/py-spotify-setlist-generator")
+    on how to create a config file.
+        """)
+        sys.exit(0)
 
     setlist_generator = SpotifySetlistGenerator(config)
     request_setlistfm()
 
 def request_setlistfm():
     '''
-    Promt the user to search for a setlist and initiate the playlist creation. 
+    Prompt the user to search for a setlist and initiate the playlist creation. 
     This is the main loop that controls interaction with the user
     '''
     global setlist_generator
     global found_setlists
+    found_setlists = {}
 
     answers = prompt(setlist_query_question)
-    found_setlists = setlist_generator.find_setlist(artist=answers['setlist_query'])
+    all_setlists = setlist_generator.find_setlist(artist=answers['setlist_query'])
+
+    # filter setlists where there is no setlist data
+    found_setlists = [x for x in all_setlists if len(x['sets']['set']) > 0]
+
+    setlist_result_question = [
+        {
+            'type': 'list',
+            'name': 'setlist_result',
+            'message': 'Select a setlist you want to generate a spotify playlist for - or select \'Search again...\'',
+            'choices': get_setlist_options
+        }
+    ]   
     answer = prompt(setlist_result_question)
     
     # Start search again if user wants to
@@ -83,26 +108,53 @@ def request_playlist_generation(setlist, option):
     
     global setlist_generator
 
+    print_setlist(setlist)
+
     setlist_confirm = [
         {
             'type': 'confirm',
             'name': 'confirm',
-            'message': 'Do you really want to create a playlist based on the setlist of this concert:\n{}'.format(option),
+            'message': 'Do you really want to create a playlist based on the setlist of this concert?',
             'default': False
         }
     ]
-
-    if prompt(setlist_confirm):
+    answer = prompt(setlist_confirm)
+    if answer['confirm']:
         url = setlist_generator.build_setlist(setlist)
-
         try:
             webbrowser.open(url)
         except:
             pass
-    else:
-        pass
 
     request_setlistfm()
+
+def print_setlist(setlist):
+    artist = setlist['artist']['name']
+    venue = setlist['venue']['name']
+    venue_city = setlist['venue']['city']['name']
+    tour_name = setlist['tour']['name']
+    date = setlist['eventDate']
+
+    print('')
+    print('Setlist:')
+    print('========')
+    print('{}: {} - {}, {} - {}:'.format(date, artist, venue, venue_city, tour_name))
+    print('========')
+
+    count = 1
+    for song in setlist['sets']['set'][0]['song']:
+        name = song['name']
+        info = song['info']
+
+        # If the song name is empty then the info attribute often provides some info
+        if not name and info:
+            print('{}. !Info: {}'.format(count, info))
+        else:
+            print('{}. {}'.format(count, name))
+
+        count += 1
+
+    print('')
 
 def find_authentifications():
     '''
@@ -117,16 +169,9 @@ def find_authentifications():
         with open(os.path.join(script_dir, config_file), 'r') as f:
             return json.load(f)
     except Exception as e:
-        raise e
+        pass
 
     return {}
 
-def request_authentifications():
-    '''
-    If not provided by a json file, request the access tokens from the user
-    via cli
-    '''
-    pass
-
-# TODO if is '__main__'
-main()
+if __name__ == "__main__":
+    main()

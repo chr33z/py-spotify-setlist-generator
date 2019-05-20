@@ -60,9 +60,15 @@ class SpotifySetlistGenerator():
         :param str setlist: list of songs of an artist as dictionary
         '''
         artist = setlist['artist']['name']
+        venue = setlist['venue']['name']
+        venue_city = setlist['venue']['city']['name']
         tour_name = setlist['tour']['name']
         date = setlist['eventDate']
-        playlist_name = '{} - {} - {}'.format(artist, tour_name, date[-4:])
+
+        if tour_name != 'No Tour Assigned':
+            playlist_name = '{}: {}, {} - {}'.format(artist, venue_city, tour_name, date[-4:])
+        else:
+            playlist_name = '{}: {}, {} - {}'.format(artist, venue_city, venue, date[-4:])
 
         songs_not_found = []
         song_ids = []
