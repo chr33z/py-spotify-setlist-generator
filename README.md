@@ -5,11 +5,7 @@ A python generator for playlists based on an artists setlist during concerts and
 Heavily inspired by this project: https://github.com/mileshenrichs/spotify-playlist-generator
 And using the great work of this project: https://github.com/plamere/spotipy
 
----
-
-This project is still under development and will receive some updates that make usage much easier.
-
----
+![Spotify Setlist Generator Usage](https://github.com/chr33z/py-spotify-setlist-generator/blob/master/img/usage.gif)
 
 ## How to use:
 For the first use there are some steps you have to do in order to use the tool. These steps have to be performed once(!) for a user. When you are comfortable with sharing your spotify ```client id``` and ```client secret``` (see below) you only have to change the ```spotify user id``` to share the tool.
