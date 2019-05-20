@@ -1,4 +1,4 @@
-# py-spotify-setlist-generator
+# Py Spotify Setlist Generator
 A python generator for playlists based on an artists setlist during concerts and tours.
 ---
 
