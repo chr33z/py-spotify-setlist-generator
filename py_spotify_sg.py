@@ -108,33 +108,12 @@ class SpotifySetlistGenerator():
         :param str list of spotify song ids
         '''
 
-        description = '''
-        'This playlist was built by a script.  Heavily inspired by this project: https://github.com/mileshenrichs/spotify-playlist-generator'
-        '''
+        description = r'This playlist was built by the tool Py Spotify Setlist Generator. See how it works on: https://github.com/chr33z/py-spotify-setlist-generator. MIT License - Copyright (c) 2019 Christopher Gebhardt'
         sp = spotipy.Spotify(self.token)
-        sp.trace = True
-        playlist = sp.user_playlist_create(self.config['username'], playlist_name, public=True)
-        results = sp.user_playlist_add_tracks(self.config['username'], playlist['id'], song_ids)
+        playlist = sp.user_playlist_create(self.config['username'], playlist_name, public=True, description=description)
+        results = sp.user_playlist_add_tracks(self.config['username'], playlist['id'], song_ids, 0)
 
         return playlist['external_urls']['spotify']
-
-    def add_songs_to_playlist(self, playlist_id, song_ids):
-        '''
-        Add songs to an existing playlist on spotify
-
-        :param str playlist_id: spotify id of the playlist
-        :param str song_ids: list of spotify song ids
-        '''
-        # get user id (used in request)
-        c.execute("SELECT value FROM tokens WHERE token_type = 'spotify_id'")
-        userId = c.fetchone()[0]
-
-        # send request to add tracks to Spotify playlist
-        reqHeader = {'Authorization': 'Bearer {}'.format(spotifyToken), 'Content-Type': 'application/json'}
-        reqBody = {'uris': list(map((lambda song_id: 'spotify:track:' + song_id), song_ids))}
-
-        post_url = 'https://api.spotify.com/v1/users/{}/playlists/{}/tracks'.format(userId, playlist_id)
-        r = requests.post(post_url, headers=reqHeader, json=reqBody)
 
     def setlistfm_auth_header(self, config):
         return {

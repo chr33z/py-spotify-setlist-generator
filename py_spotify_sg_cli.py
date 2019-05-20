@@ -1,11 +1,11 @@
 from __future__ import print_function, unicode_literals
 from PyInquirer import prompt, print_json
 from py_spotify_sg import SpotifySetlistGenerator
+import msvcrt
 import os
 import json
 import sys
 import webbrowser
-
 
 setlist_generator = None
 found_setlists = ['setlist 1', 'setlist 2']
@@ -60,7 +60,20 @@ def main():
     Please refer to print("For further information see: https://github.com/chr33z/py-spotify-setlist-generator")
     on how to create a config file.
         """)
+        msvcrt.getch()
         sys.exit(0)
+
+    print('')
+    print('Connect with Spotify')
+    print('====================')
+    print("""
+    If you start this script for the first time, a browser will open where you can connect to your
+    Spotify account. When finished the browser will change to a new page. Copy the address of this
+    page (URL) and enter it here.
+
+    Press any key to continue...
+        """)
+    msvcrt.getch()
 
     setlist_generator = SpotifySetlistGenerator(config)
     request_setlistfm()
@@ -144,7 +157,7 @@ def print_setlist(setlist):
     count = 1
     for song in setlist['sets']['set'][0]['song']:
         name = song['name']
-        info = song['info']
+        info = song['info'] if 'info' in song else ''
 
         # If the song name is empty then the info attribute often provides some info
         if not name and info:

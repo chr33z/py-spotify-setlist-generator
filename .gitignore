@@ -143,3 +143,4 @@ dmypy.json
 # Other ignores
 .cache*
 config.json
+dist/*
