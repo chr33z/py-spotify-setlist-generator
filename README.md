@@ -24,7 +24,7 @@ When using this tool for the first time there are some steps you have to do. The
 ![Spotify Edit Settings](https://github.com/chr33z/py-spotify-setlist-generator/blob/master/img/spotify_edit_settings.png)
 
 - In Spotify, copy the link of your spotify URI, e.g. ```spotify:user:5585525555```
-- Note the part after ```user:...``` as your ```spotify user id```
+- Note the part after ```user:...``` as your ```spotify user id```, so e.g. ```5585525555```
 
 ![Spotify User ID](https://github.com/chr33z/py-spotify-setlist-generator/blob/master/img/spotify_user_id.png)
 
