@@ -1,11 +1,13 @@
 # Py Spotify Setlist Generator
-A python generator for playlists based on an artists setlist during concerts and tours.
+A python generator for playlists based on an artists setlist during concerts.
 ---
 
 ![Spotify Setlist Generator Usage](https://github.com/chr33z/py-spotify-setlist-generator/blob/master/img/usage.gif)
 
 ## How to use:
 When using this tool for the first time there are some steps you have to do. These steps have to be only performed once(!) for a user. When you are comfortable with sharing your spotify ```client id``` and ```client secret``` (see below) you only have to change the ```spotify user id``` to share the tool.
+
+This tool uses a ```config.json``` file to provide the authentification and api keys. Read on to see how to create your own config.json. 
 
 ### Requirements
 - Try the windows binaries in [coming soon]
@@ -44,8 +46,14 @@ When using this tool for the first time there are some steps you have to do. The
 }
 ```
 
-### First time authentification with Spotify
+### First time startup and authentification with Spotify
+The tool is started by running ```py_spotify_sg_cli.py```, you may have to install some dependencies [info on that tbc]
+
 Upon the first start of the tool you have to confirm access of this tool to your spotify account. For this a browser windows is opened where you can enter your credentials. **Your will be redirected to page ```http://localhost/?code=...```. Copy the URL and paste it in the tools terminal window.**
+
+## Further Development
+- [ ] Search for festivals and create playlists based on the bands playing there
+- [ ] Create a gui version
 
 ## Acknowledgements
 Heavily inspired by this project:
