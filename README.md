@@ -2,6 +2,9 @@
 A python generator for playlists based on an artists setlist during concerts.
 ---
 
+## Why:
+Do you have one of these friends? For every concert and festival they visit they create these carefully curated playlists on spotify containing every track the band will play on this particular evening - just to put them on social media to share with their friends. Now you can do that too, even without carefully curating anything! 
+
 ![Spotify Setlist Generator Usage](https://github.com/chr33z/py-spotify-setlist-generator/blob/master/img/usage.gif)
 
 ## How to use:
