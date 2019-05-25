@@ -144,3 +144,4 @@ dmypy.json
 .cache*
 config.json
 dist/*
+*.spec

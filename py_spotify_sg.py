@@ -14,8 +14,7 @@ class SpotifySetlistGenerator():
         Initialize the generator by providing spotify and setlistfm authentification
         credentials.
 
-        :param str spotify_auth: spotify authentification
-        :param str setlistfm_auth: setlistfm authentification
+        :param dict config: spotify and setlistfm credentials
         '''
         self.config = config
 
@@ -23,7 +22,8 @@ class SpotifySetlistGenerator():
         client_secret = config['spotify_client_secret']
         username = config['username']
         scope = 'playlist-modify-public'
-        self.token = sputil.prompt_for_user_token(username, scope, client_id=client_id, client_secret=client_secret, redirect_uri='http://localhost/')
+        self.token = sputil.prompt_for_user_token(
+            username, scope, client_id=client_id, client_secret=client_secret, redirect_uri='http://localhost/')
 
     def find_setlist(self, artist, tour='', limit=10):
         '''
@@ -62,11 +62,11 @@ class SpotifySetlistGenerator():
         artist = setlist['artist']['name']
         venue = setlist['venue']['name']
         venue_city = setlist['venue']['city']['name']
-        tour_name = setlist['tour']['name']
+        tour_name = setlist['tour']['name'] if 'tour' in setlist else 'No Tour Assigned'
         date = setlist['eventDate']
 
         if tour_name != 'No Tour Assigned':
-            playlist_name = '{}: {}, {} - {}'.format(artist, venue_city, tour_name, date[-4:])
+            playlist_name = '{}: {} - {}'.format(artist, tour_name, date[-4:])
         else:
             playlist_name = '{}: {}, {} - {}'.format(artist, venue_city, venue, date[-4:])
 
@@ -105,9 +105,8 @@ class SpotifySetlistGenerator():
         The playlist will be added to the spotify users account
 
         :param str playlist_name: Name of the playlist
-        :param str list of spotify song ids
+        :param str song_ids: list of spotify song ids
         '''
-
         description = r'This playlist was built by the tool Py Spotify Setlist Generator. See how it works on: https://github.com/chr33z/py-spotify-setlist-generator. MIT License - Copyright (c) 2019 Christopher Gebhardt'
         sp = spotipy.Spotify(self.token)
         playlist = sp.user_playlist_create(self.config['username'], playlist_name, public=True, description=description)

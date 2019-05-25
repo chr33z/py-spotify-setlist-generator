@@ -21,7 +21,7 @@ def get_setlist_options(answers):
 
         artist = setlist['artist']['name']
         date = setlist['eventDate']
-        tour = setlist['tour']['name']
+        tour = setlist['tour']['name'] if 'tour' in setlist else 'No Tour Assigned'
         venue = setlist['venue']['name']
         venue_city = setlist['venue']['city']['name']
 
@@ -145,7 +145,7 @@ def print_setlist(setlist):
     artist = setlist['artist']['name']
     venue = setlist['venue']['name']
     venue_city = setlist['venue']['city']['name']
-    tour_name = setlist['tour']['name']
+    tour_name = setlist['tour']['name'] if 'tour' in setlist else 'No Tour Assigned'
     date = setlist['eventDate']
 
     print('')
