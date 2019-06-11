@@ -1,8 +1,10 @@
 import requests
 import urllib.parse
+import re
 import spotipy
 import spotipy.util as sputil
 import pprint
+from bs4 import BeautifulSoup
 
 class SpotifySetlistGenerator():
 
@@ -25,12 +27,15 @@ class SpotifySetlistGenerator():
         self.token = sputil.prompt_for_user_token(
             username, scope, client_id=client_id, client_secret=client_secret, redirect_uri='http://localhost/')
 
-    def find_setlist(self, artist, tour='', limit=10):
+#region: Concert query
+
+    def find_concert(self, artist, tour='', limit=10):
         '''
-        Find a setlist on setlist.fm by searching for an artist, venue or tour
+        Find a concert on setlist.fm by searching for an artist, venue or tour
         :param str artist: A string containing the artists name
         :param str tour: A string containing the tour name (optional)
-        :return setlists: list of found setlists (see for further info: https://api.setlist.fm/docs/1.0/ui/index.html#//1.0/search/setlists)
+        :return setlists: list of found setlists (see for further info: 
+        https://api.setlist.fm/docs/1.0/ui/index.html#//1.0/search/setlists)
         '''
         artist = urllib.parse.quote(artist)
         tour = urllib.parse.quote(tour)
@@ -84,6 +89,86 @@ class SpotifySetlistGenerator():
         # TODO raise some exception if playlist could not be created
         return playlist_url
 
+#endregion
+
+#region: Event query
+
+    def find_events(self, search_query, limit=10):
+        '''
+        Find a concert or festival using the songkick API. Returns a songkick json
+        with the relevant information: https://www.songkick.com/developer/response-objects#event-object
+        '''
+        # Songkick API doesnt allow for direct search of events by name.
+        # Query the default website search and collect the returned event-ids
+        # by parsing the result with beautiful soup.
+        # Then: Query the songkick API using the event ids
+
+        html_search = 'https://www.songkick.com/search?utf8=%E2%9C%93&type=initial&query={}'.format(search_query)
+        html_result = requests.get(html_search)
+        soup = BeautifulSoup(html_result.text, 'html.parser')
+
+        event_ids = set([])
+        all_links = soup.find_all('a')
+        event_links = [l.get('href') for l in all_links if '/id/' in l.get('href')]
+            
+        for event_link in event_links:
+            try:
+                event_id = re.findall('.*/id/(\d+)-.*', event_link)[0]
+                int(event_id)
+                event_ids.add(event_id)
+            except Exception as e:
+                continue
+
+
+        events = []
+        for event_id in event_ids:
+            try:
+                api_key = self.config['songkick_api_key']
+                get = 'https://api.songkick.com/api/3.0/events/{}.json?apikey={}'.format(event_id, api_key)
+                r = requests.get(get)
+                result = r.json()
+                events.append(result)
+            except Exception as e:
+                print(e)
+        
+        return events
+
+    def build_playlist_from_event(self, event_name, artists, top_track_limit=5):
+        # for every artist, search the 5 most popular songs and add them to the song list
+
+        song_ids = []
+        artists_not_found = []
+        for artist in artists:
+            sp = spotipy.Spotify(self.token)
+            search_result = sp.search(q='artist:' + artist, type='artist')
+
+            try:   
+                artist_uri = search_result['artists']['items'][0]['uri']
+                top_tracks = sp.artist_top_tracks(artist_uri)
+
+                counter = 0
+                for track in top_tracks['tracks']:
+                    if counter == top_track_limit:
+                        break
+
+                    counter += 1
+                    song_ids.append(track['id'])
+
+            except IndexError as index_error:
+                print(index_error)
+                artists_not_found.append(artist)
+                continue
+            except KeyError as key_error:
+                artists_not_found.append(artist)
+                print(key_error)
+                continue
+
+        playlist_url = self.create_playlist(event_name, song_ids)
+        # TODO raise some exception if playlist could not be created
+        return playlist_url
+
+#endregion
+
     def find_song_on_spotify(self, artist, song):
         '''
         Query the spotify api to search for a song id of a given song of an artist
@@ -107,12 +192,18 @@ class SpotifySetlistGenerator():
         :param str playlist_name: Name of the playlist
         :param str song_ids: list of spotify song ids
         '''
+
         description = r'This playlist was built by the tool Py Spotify Setlist Generator. See how it works on: https://github.com/chr33z/py-spotify-setlist-generator. MIT License - Copyright (c) 2019 Christopher Gebhardt'
         sp = spotipy.Spotify(self.token)
         playlist = sp.user_playlist_create(self.config['username'], playlist_name, public=True, description=description)
-        results = sp.user_playlist_add_tracks(self.config['username'], playlist['id'], song_ids, 0)
+        
+        # Split list in smaller chunks because spotify has a 100 song limit per request
+        sub_lists = [song_ids[i:i + 50] for i in range(0, len(song_ids), 50)]
+        for li in sub_lists:
+            results = sp.user_playlist_add_tracks(self.config['username'], playlist['id'], li, 0)
 
         return playlist['external_urls']['spotify']
+
 
     def setlistfm_auth_header(self, config):
         return {

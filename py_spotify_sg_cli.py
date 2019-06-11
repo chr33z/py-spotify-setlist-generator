@@ -9,6 +9,7 @@ import webbrowser
 
 setlist_generator = None
 found_setlists = ['setlist 1', 'setlist 2']
+found_events = None
 
 def get_setlist_options(answers):
     global found_setlists
@@ -31,11 +32,32 @@ def get_setlist_options(answers):
     options.append('Search again...')
     return options
 
+def get_events_options(answers):
+    options = []
+
+    for event in found_events:
+        try:
+            option = "{}".format(event['resultsPage']['results']['event']['displayName'])
+            options.append(option)
+        except:
+            continue
+
+    options.append('Search again...')
+    return options
+
 setlist_query_question = [
     {
         'type': 'input',
         'name': 'setlist_query',
         'message': 'Type the name of an artist or a tour to search for setlists...'
+    }
+]
+
+event_query_question = [
+    {
+        'type': 'input',
+        'name': 'event_query',
+        'message': 'Type the name of an event to search for...'
     }
 ]
 
@@ -76,19 +98,44 @@ def main():
     msvcrt.getch()
 
     setlist_generator = SpotifySetlistGenerator(config)
-    request_setlistfm()
 
-def request_setlistfm():
+    # Start interacting with the user
+    request_playlist_mode()
+
+def request_playlist_mode():
     '''
-    Prompt the user to search for a setlist and initiate the playlist creation. 
-    This is the main loop that controls interaction with the user
+    Request whether to generate from a setlist or an event
+    '''
+    select_mode_question = [
+        {
+            'type': 'list',
+            'name': 'mode',
+            'message': 'Select a setlist you want to generate a spotify playlist for - or select \'Search again...\'',
+            'choices': [
+                'Create a playlist from a concerts setlist', 
+                'Create a playlist from an event with multiple artists']
+        }
+    ]   
+    answer = prompt(select_mode_question)
+
+    if 'concerts' in answer['mode']:
+        # Start the setlist mode
+        start_concert_playlist_generation()
+    else:
+        # Start the event mode
+        start_event_playlist_generation()
+
+def start_concert_playlist_generation():
+    '''
+    Prompt the user to search for a concert setlist and initiate the playlist creation. 
+    This is the main loop that controls interaction with the user in this mode.
     '''
     global setlist_generator
     global found_setlists
     found_setlists = {}
 
     answers = prompt(setlist_query_question)
-    all_setlists = setlist_generator.find_setlist(artist=answers['setlist_query'])
+    all_setlists = setlist_generator.find_concert(artist=answers['setlist_query'])
 
     # filter setlists where there is no setlist data
     found_setlists = [x for x in all_setlists if len(x['sets']['set']) > 0]
@@ -105,7 +152,7 @@ def request_setlistfm():
     
     # Start search again if user wants to
     if 'Search again' in answer['setlist_result']:
-        request_setlistfm()
+        start_concert_playlist_generation()
         return
 
     # Generate this setlist again so that we can get an index of the selected 
@@ -114,14 +161,14 @@ def request_setlistfm():
     selected_option = answer['setlist_result']
     index = setlist_options.index(selected_option)
     if index != -1:
-        request_playlist_generation(found_setlists[index], selected_option)
+        request_concert_playlist_generation(found_setlists[index], selected_option)
     pass
 
-def request_playlist_generation(setlist, option):
+def request_concert_playlist_generation(setlist, option):
     
     global setlist_generator
 
-    print_setlist(setlist)
+    print_concert_setlist(setlist)
 
     setlist_confirm = [
         {
@@ -139,9 +186,9 @@ def request_playlist_generation(setlist, option):
         except:
             pass
 
-    request_setlistfm()
+    start_concert_playlist_generation()
 
-def print_setlist(setlist):
+def print_concert_setlist(setlist):
     artist = setlist['artist']['name']
     venue = setlist['venue']['name']
     venue_city = setlist['venue']['city']['name']
@@ -168,6 +215,113 @@ def print_setlist(setlist):
         count += 1
 
     print('')
+
+def start_event_playlist_generation():
+    '''
+    request the user to search for an event and initiate playlist creation.
+    This ist main loop that controls interaction with the user in this mode.
+    '''
+    answer = prompt(event_query_question)
+    search_query = answer['event_query']
+    
+    global found_events
+    found_events = setlist_generator.find_events(search_query)
+
+    # Print events and ask user which event to chose
+    events_result_question = [
+        {
+            'type': 'list',
+            'name': 'event_result',
+            'message': 'Select an event you want to generate a spotify playlist for - or select \'Search again...\'',
+            'choices': get_events_options
+        }
+    ]   
+    answer = prompt(events_result_question)
+
+    # Start search again if user wants to
+    event_name = answer['event_result']
+    if 'Search again' in event_name:
+        start_event_playlist_generation()
+        return
+
+    # Find event from answer
+    event = find_event_in_list(found_events, answer['event_result'])
+    if not event:
+        print("Error: could not get event. Please try again")
+        start_event_playlist_generation()
+        return
+
+    artists = extract_event_artists(event)
+    if not artists or len(artists) == 0:
+        print("Error: The Songkick Website does not list any artists associated with this event.")
+        print("       Please try again with a different event.")
+        start_event_playlist_generation()
+        return
+
+    # List all artists so that the user can select which artists to use
+    list_of_artists = [
+    {
+           'type': 'checkbox',
+        'message': 'Select artists that will appear in your playlist. Use \'Space\' to select/deselect',
+        'name': 'selected_artists',
+        'choices': [],
+        'validate': lambda answer: 'You must choose at least one artist.' \
+            if len(answer) == 0 else True
+    }
+    ]
+
+    for artist in artists:
+        choice = {
+            'name': artist,
+            'checked' : True
+        }
+        list_of_artists[0]['choices'].append(choice)
+    
+    selected_artists = prompt(list_of_artists)['selected_artists']
+
+    while len(selected_artists) == 0:
+        print("You have to select at least one artist to generate a playlist from")
+        selected_artists = prompt(list_of_artists)
+
+    artists_confirm = [
+        {
+            'type': 'confirm',
+            'name': 'confirm',
+            'message': 'Do you really want to create a playlist based on the selected artists of this event?',
+            'default': False
+        }
+    ]
+    answer = prompt(artists_confirm)
+    if answer['confirm']:
+        url = setlist_generator.build_playlist_from_event(event_name, selected_artists)
+        try:
+            webbrowser.open(url)
+        except:
+            pass
+    
+    request_playlist_mode()
+
+def extract_event_artists(event):
+    '''
+    From a list of songkick event jsons extract the artist names
+    Songkick json scheme: https://www.songkick.com/developer/events-details
+    '''
+    artists = []
+    try:
+        for artist in event['resultsPage']['results']['event']['performance']:
+            artists.append(artist['artist']['displayName'])
+    except Exception as e:
+        print(e)
+
+    return artists
+
+def find_event_in_list(events, event_name):
+    for event in events:
+        name = event['resultsPage']['results']['event']['displayName']
+        
+        if name == event_name:
+            return event
+
 
 def find_authentifications():
     '''
